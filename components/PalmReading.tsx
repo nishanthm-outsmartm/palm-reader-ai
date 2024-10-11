@@ -6,10 +6,6 @@ interface PalmReadingProps {
 
 const PalmReading: React.FC<PalmReadingProps> = ({ reading }) => {
   if (!reading) return null;
-
-  console.log(reading)
-  console.log(typeof reading)
-
   return (
     <div className="mt-8 p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4">Your Palm Reading</h2>

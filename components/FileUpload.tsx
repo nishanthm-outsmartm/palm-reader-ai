@@ -1,4 +1,5 @@
-import React, { useState, ChangeEvent, FormEvent } from 'react';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import axios from 'axios';
 
 interface FileUploadProps {
@@ -6,54 +7,94 @@ interface FileUploadProps {
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState<boolean>(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFile(e.target.files[0]);
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      await uploadFile(file);
     }
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!file) return;
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await uploadFile(file);
+    }
+  };
 
-    setUploading(true);
+  const uploadFile = async (file: File) => {
+    setIsUploading(true);
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      const response = await axios.post<{ ipfsHash: string }>('/api/upload', formData);
+      const response = await axios.post('/api/upload', formData);
       onUploadComplete(response.data.ipfsHash);
     } catch (error) {
       console.error('Error uploading file:', error);
     } finally {
-      setUploading(false);
+      setIsUploading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <motion.div
+      className={`border-2 border-dashed rounded-lg p-8 text-center ${
+        isDragging ? 'border-purple-500 bg-purple-100' : 'border-gray-300'
+      }`}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+    >
       <input
         type="file"
         onChange={handleFileChange}
+        className="hidden"
+        id="fileInput"
         accept="image/*"
-        className="block w-full text-sm text-gray-500
-          file:mr-4 file:py-2 file:px-4
-          file:rounded-full file:border-0
-          file:text-sm file:font-semibold
-          file:bg-violet-50 file:text-violet-700
-          hover:file:bg-violet-100"
       />
-      <button
-        type="submit"
-        disabled={!file || uploading}
-        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+      <label
+        htmlFor="fileInput"
+        className="cursor-pointer text-purple-600 hover:text-purple-800"
       >
-        {uploading ? 'Uploading...' : 'Upload and Analyze'}
-      </button>
-    </form>
+        {isUploading ? (
+          <motion.div
+            className="flex items-center justify-center"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          >
+            <svg className="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Uploading...
+          </motion.div>
+        ) : (
+          <>
+            <svg className="w-12 h-12 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            Drag and drop your palm image here, or click to select
+          </>
+        )}
+      </label>
+    </motion.div>
   );
 };
 

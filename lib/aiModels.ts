@@ -49,13 +49,13 @@ function generateImageDescription(detectionResult: DetectionObject[]): string {
     
     // Agregar detalles aleatorios para hacer la descripción más interesante
     const details = [
-      "La línea de la vida parece profunda y curva.",
-      "La línea del corazón es larga y bien definida.",
-      "La línea de la cabeza es recta y clara.",
-      "Hay varias líneas menores que intersectan las líneas principales.",
-      "El monte de Venus (la base del pulgar) es prominente.",
-      "Los dedos son largos y delgados.",
-      "La forma general de la mano es rectangular.",
+      "The life line appears deep and curved.",
+      "The heart line is long and well-defined.",
+      "The head line is straight and clear.",
+      "There are several minor lines intersecting the main lines.",
+      "The Mount of Venus (the base of the thumb) is prominent.",
+      "The fingers are long and thin.",
+      "The overall shape of the hand is rectangular.",
     ];
     
     for (let i = 0; i < 3; i++) {

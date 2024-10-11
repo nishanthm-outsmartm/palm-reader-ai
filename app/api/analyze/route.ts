@@ -4,7 +4,8 @@ import { analyzePalm } from '../../../lib/aiModels';
 export async function POST(request: NextRequest) {
   try {
     const { ipfsHash } = await request.json();
-    const reading = await analyzePalm(ipfsHash);
+    const imageUrl = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
+    const reading = await analyzePalm(imageUrl);
     return NextResponse.json({ reading });
   } catch (error) {
     console.error('Error in analyze API:', error);

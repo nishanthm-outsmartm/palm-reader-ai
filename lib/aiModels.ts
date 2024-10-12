@@ -23,7 +23,11 @@ export async function analyzePalm(imageUrl: string): Promise<string> {
     return palmReading;
   } catch (error) {
     console.error('Error analyzing palm:', error);
-    throw error;
+    if (error instanceof Error) {
+      return `Error: ${error.message}`;
+    } else {
+      return "An unexpected error occurred while analyzing the image.";
+    }
   }
 }
 
@@ -39,30 +43,31 @@ interface DetectionObject {
 }
 
 function generateImageDescription(detectionResult: DetectionObject[]): string {
-  let description = "En esta imagen de una palma, puedo ver:";
+  const hasHand = detectionResult.some((obj: DetectionObject) => 
+    obj.label === "person" || obj.label === "hand"
+  );
 
-  const hasHand = detectionResult.some((obj: DetectionObject) => obj.label === "person");
-  if (hasHand) {
-    description += " una mano humana con su palma visible.";
-    description += " Las líneas de la palma son claramente visibles.";
-    description += " Puedo distinguir la línea de la vida, la línea del corazón y la línea de la cabeza.";
-    
-    // Agregar detalles aleatorios para hacer la descripción más interesante
-    const details = [
-      "The life line appears deep and curved.",
-      "The heart line is long and well-defined.",
-      "The head line is straight and clear.",
-      "There are several minor lines intersecting the main lines.",
-      "The Mount of Venus (the base of the thumb) is prominent.",
-      "The fingers are long and thin.",
-      "The overall shape of the hand is rectangular.",
-    ];
-    
-    for (let i = 0; i < 3; i++) {
-      description += " " + details[Math.floor(Math.random() * details.length)];
-    }
-  } else {
-    description += " no puedo identificar claramente una palma humana. La imagen puede no ser clara o no mostrar una palma abierta.";
+  if (!hasHand) {
+    throw new Error("No hand detected in the image. Please upload an image of a palm.");
+  }
+
+  let description = "En esta imagen de una palma, puedo ver: una mano humana con su palma visible.";
+  description += " Las líneas de la palma son claramente visibles.";
+  description += " Puedo distinguir la línea de la vida, la línea del corazón y la línea de la cabeza.";
+  
+  // Agregar detalles aleatorios para hacer la descripción más interesante
+  const details = [
+    "The life line appears deep and curved.",
+    "The heart line is long and well-defined.",
+    "The head line is straight and clear.",
+    "There are several minor lines intersecting the main lines.",
+    "The Mount of Venus (the base of the thumb) is prominent.",
+    "The fingers are long and thin.",
+    "The overall shape of the hand is rectangular.",
+  ];
+  
+  for (let i = 0; i < 3; i++) {
+    description += " " + details[Math.floor(Math.random() * details.length)];
   }
 
   return description;
@@ -78,7 +83,7 @@ Your palm reading:`;
 
   try {
     const response = await hf.textGeneration({
-      model: "meta-llama/Llama-2-7b-chat-hf",  // Usando Llama 2 7B Chat model
+      model: "meta-llama/Llama-2-7b-chat-hf",
       inputs: prompt,
       parameters: {
         max_new_tokens: 250,

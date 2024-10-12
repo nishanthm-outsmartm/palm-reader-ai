@@ -12,21 +12,30 @@ export default function Home() {
   const [reading, setReading] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [ipfsHash, setIpfsHash] = useState<string | null>(null);
 
   const handleUploadComplete = (hash: string) => {
     setIpfsHash(hash);
     setImageUrl(`https://gateway.pinata.cloud/ipfs/${hash}`);
+    setError(null); // Clear any previous errors
   };
 
   const handleAnalyze = async () => {
     if (!ipfsHash) return;
     setIsLoading(true);
+    setError(null);
     try {
       const response = await axios.post<{ reading: string }>('/api/analyze', { ipfsHash });
-      setReading(response.data.reading);
+      if (response.data.reading.startsWith('Error:')) {
+        setError(response.data.reading);
+        setReading(null);
+      } else {
+        setReading(response.data.reading);
+      }
     } catch (error) {
       console.error('Error analyzing palm:', error);
+      setError('An unexpected error occurred while analyzing the image.');
     } finally {
       setIsLoading(false);
     }
@@ -59,7 +68,12 @@ export default function Home() {
             {isLoading ? 'Analyzing...' : 'Analyze Palm'}
           </Button>
         )}
-        <PalmReading reading={reading} />
+        {error && (
+          <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
+        {reading && <PalmReading reading={reading} />}
       </div>
     </motion.main>
   );

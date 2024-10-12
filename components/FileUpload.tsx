@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Upload } from 'lucide-react';
 
 interface FileUploadProps {
@@ -11,6 +10,7 @@ interface FileUploadProps {
 
 const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
   const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadFile = async (file: File) => {
     setIsUploading(true);
@@ -34,28 +34,28 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
     }
   };
 
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
-    <div className="mt-4">
-      <Label htmlFor="fileInput" className="cursor-pointer">
-        <motion.div
-          className="flex items-center justify-center p-4 border-2 border-dashed rounded-md"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <input
-            type="file"
-            onChange={handleFileChange}
-            className="hidden"
-            id="fileInput"
-            accept="image/*"
-          />
-          <Button disabled={isUploading}>
-            {isUploading ? 'Uploading...' : 'Upload Image'}
-            <Upload className="ml-2 h-4 w-4" />
-          </Button>
-        </motion.div>
-      </Label>
-    </div>
+    <motion.div
+      className="mt-4 flex items-center justify-center p-4 border-2 border-dashed rounded-md"
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+    >
+      <input
+        type="file"
+        onChange={handleFileChange}
+        className="hidden"
+        ref={fileInputRef}
+        accept="image/*"
+      />
+      <Button onClick={handleButtonClick} disabled={isUploading}>
+        {isUploading ? 'Uploading...' : 'Upload Image'}
+        <Upload className="ml-2 h-4 w-4" />
+      </Button>
+    </motion.div>
   );
 };
 

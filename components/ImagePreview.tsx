@@ -1,25 +1,26 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { Card, CardContent } from "@/components/ui/card";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface ImagePreviewProps {
   imageUrl: string | null;
-  placeholderText: string;
 }
 
-const ImagePreview: React.FC<ImagePreviewProps> = ({ imageUrl, placeholderText }) => {
+const ImagePreview: React.FC<ImagePreviewProps> = ({ imageUrl }) => {
   return (
-    <motion.div
-      className="mt-4 rounded-lg overflow-hidden shadow-lg bg-gray-100 h-64 flex items-center justify-center"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      {imageUrl ? (
-        <img src={imageUrl} alt="Uploaded palm" className="w-full h-full object-cover" />
-      ) : (
-        <p className="text-gray-500 text-center p-4">{placeholderText}</p>
-      )}
-    </motion.div>
+    <Card className="w-full">
+      <CardContent className="p-4">
+        <AspectRatio ratio={16 / 9}>
+          {imageUrl ? (
+            <img src={imageUrl} alt="Uploaded palm" className="rounded-md object-contain w-full h-full" />
+          ) : (
+            <div className="flex items-center justify-center w-full h-full bg-muted">
+              <p className="text-muted-foreground">Upload an image to get started</p>
+            </div>
+          )}
+        </AspectRatio>
+      </CardContent>
+    </Card>
   );
 };
 

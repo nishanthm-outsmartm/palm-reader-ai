@@ -10,6 +10,8 @@ import PastReadingsGallery from '../components/PastReadingsGallery';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Play, Pause } from 'lucide-react';
+import Hero from '@/components/HeroComponent';
+import Footer from '@/components/Footer';
 
 export default function Home() {
   const [reading, setReading] = useState<string | null>(null);
@@ -70,59 +72,59 @@ export default function Home() {
   };
 
   return (
-    <motion.main 
-      className="container mx-auto px-4 py-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <motion.h1 
-        className="text-4xl font-bold mb-8 text-center"
-        initial={{ y: -50 }}
-        animate={{ y: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+    <div className="min-h-screen bg-gradient-to-b from-yellow-50 to-orange-100">
+      <Hero />
+      <motion.main 
+        className="container mx-auto px-4 py-12"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.5 }}
       >
-        Palm Reader AI
-      </motion.h1>
-      <Tabs defaultValue="current" className="w-full max-w-4xl mx-auto">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="current">Current Reading</TabsTrigger>
-          <TabsTrigger value="past">Past Readings</TabsTrigger>
-        </TabsList>
-        <TabsContent value="current">
-          <div className="max-w-2xl mx-auto">
-            <ImagePreview imageUrl={imageUrl} />
-            <FileUpload onUploadComplete={handleUploadComplete} />
-            {imageUrl && (
-              <Button
-                className="mt-4 w-full"
-                onClick={handleAnalyze}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Analyzing...' : 'Analyze Palm'}
-              </Button>
-            )}
-            {error && (
-              <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-                {error}
-              </div>
-            )}
-            {audioUrl && (
-              <div className="mt-4 flex justify-center">
-                <Button onClick={toggleAudio}>
-                  {isPlaying ? <Pause className="mr-2" /> : <Play className="mr-2" />}
-                  {isPlaying ? 'Pause Reading' : 'Play Reading'}
+        <Tabs defaultValue="current" className="w-full max-w-4xl mx-auto">
+          <TabsList className="grid w-full grid-cols-2 bg-yellow-200 rounded-lg p-1">
+            <TabsTrigger value="current" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+              Current Reading
+            </TabsTrigger>
+            <TabsTrigger value="past" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+              Past Readings
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="current">
+            <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6 mt-6">
+              <ImagePreview imageUrl={imageUrl} />
+              <FileUpload onUploadComplete={handleUploadComplete} />
+              {imageUrl && (
+                <Button
+                  className="mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white"
+                  onClick={handleAnalyze}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Analyzing...' : 'Analyze Palm'}
                 </Button>
-                <audio ref={audioRef} src={audioUrl} onEnded={() => setIsPlaying(false)} />
-              </div>
-            )}
-            {reading && <PalmReading reading={reading} />}
-          </div>
-        </TabsContent>
-        <TabsContent value="past" className="w-full">
-          <PastReadingsGallery />
-        </TabsContent>
-      </Tabs>
-    </motion.main>
+              )}
+              {error && (
+                <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                  {error}
+                </div>
+              )}
+              {audioUrl && (
+                <div className="mt-4 flex justify-center">
+                  <Button onClick={toggleAudio} className="bg-yellow-500 hover:bg-yellow-600 text-white">
+                    {isPlaying ? <Pause className="mr-2" /> : <Play className="mr-2" />}
+                    {isPlaying ? 'Pause Reading' : 'Play Reading'}
+                  </Button>
+                  <audio ref={audioRef} src={audioUrl} onEnded={() => setIsPlaying(false)} />
+                </div>
+              )}
+              {reading && <PalmReading reading={reading} />}
+            </div>
+          </TabsContent>
+          <TabsContent value="past" className="w-full">
+            <PastReadingsGallery />
+          </TabsContent>
+        </Tabs>
+      </motion.main>
+      <Footer/>
+    </div>
   );
 }

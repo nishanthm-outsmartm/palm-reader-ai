@@ -1,28 +1,20 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 interface PalmReadingProps {
-  reading: string | null;
+  reading: string;
 }
 
 const PalmReading: React.FC<PalmReadingProps> = ({ reading }) => {
-  if (!reading) return null;
-  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
+      className="mt-8 bg-gradient-to-br from-yellow-100 to-orange-100 border-2 border-yellow-300 rounded-lg p-6"
     >
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Your Palm Reading</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">{reading}</p>
-        </CardContent>
-      </Card>
+      <h2 className="text-2xl text-center text-orange-800 font-serif mb-4">Your Mystical Palm Reading</h2>
+      <p className="text-orange-900 leading-relaxed italic font-serif">{reading}</p>
     </motion.div>
   );
 };

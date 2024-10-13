@@ -30,10 +30,8 @@ const Footer: React.FC = () => {
           >
             <h3 className="text-xl font-serif mb-4">Quick Links</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="hover:text-yellow-300 transition-colors">Home</a></li>
               <li><a href="#" className="hover:text-yellow-300 transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-yellow-300 transition-colors">How It Works</a></li>
-              <li><a href="#" className="hover:text-yellow-300 transition-colors">Privacy Policy</a></li>
+              <li><a href="https://bakslash.com/sobre-nosotros-tecnologia-a-medida" className="hover:text-yellow-300 transition-colors">How It Works</a></li>
             </ul>
           </motion.div>
 
@@ -45,13 +43,14 @@ const Footer: React.FC = () => {
           >
             <h3 className="text-xl font-serif mb-4">Connect With Us</h3>
             <div className="flex space-x-4 mb-4">
-              <a href="#" className="hover:text-yellow-300 transition-colors"><Facebook size={24} /></a>
+              {/* <a href="#" className="hover:text-yellow-300 transition-colors"><Facebook size={24} /></a>
               <a href="#" className="hover:text-yellow-300 transition-colors"><Twitter size={24} /></a>
-              <a href="#" className="hover:text-yellow-300 transition-colors"><Instagram size={24} /></a>
-              <a href="#" className="hover:text-yellow-300 transition-colors"><Mail size={24} /></a>
+              <a href="#" className="hover:text-yellow-300 transition-colors"><Instagram size={24} /></a> */}
+                <a href="mailto:eduardo.hernandez@bakslash.com" className="hover:text-yellow-300 transition-colors">
+                <Mail size={24} />
+                eduardo.hernandez@bakslash.com
+              </a>
             </div>
-            <p className="text-sm">contact@palmreaderai.com</p>
-            <p className="text-sm">+1 (555) 123-4567</p>
           </motion.div>
         </div>
 

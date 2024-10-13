@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Twitter, Mail } from 'lucide-react';
+import Link from 'next/link';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -30,8 +31,8 @@ const Footer: React.FC = () => {
           >
             <h3 className="text-xl font-serif mb-4">Quick Links</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="hover:text-yellow-300 transition-colors">About Us</a></li>
-              <li><a href="https://bakslash.com/sobre-nosotros-tecnologia-a-medida" className="hover:text-yellow-300 transition-colors">How It Works</a></li>
+              <li><Link href="https://ehernandezvilla.github.io/" className="hover:text-yellow-300 transition-colors">About Me</Link></li>
+              <li><Link href="#how-to-use" className="hover:text-yellow-300 transition-colors">How It Works</Link></li>
             </ul>
           </motion.div>
 

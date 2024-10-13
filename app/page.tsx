@@ -11,7 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Play, Pause, Loader } from 'lucide-react';
 import Hero from '@/components/HeroComponent';
+import HowToUse from '@/components/HowToUse';
 import Footer from '@/components/Footer';
+
 
 const loadingMessages = [
   "Analyzing the lines of destiny...",
@@ -100,6 +102,9 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-yellow-50 to-orange-100">
       <Hero />
+      <a href="#how-to-use" className="text-orange-600 hover:text-orange-800">
+      <HowToUse />
+      </a>
       <motion.main 
         className="container mx-auto px-4 py-12"
         initial={{ opacity: 0, y: 20 }}

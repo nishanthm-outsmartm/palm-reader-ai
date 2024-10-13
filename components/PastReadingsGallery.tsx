@@ -1,23 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Play, Pause } from 'lucide-react';
 
 interface Reading {
   ipfsHash: string;
   timestamp: string;
   reading: string;
+  audioIpfsHash: string;
 }
 
 const PastReadingsGallery: React.FC = () => {
   const [pastReadings, setPastReadings] = useState<Reading[]>([]);
+  const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const rawReadings = localStorage.getItem('pastReadings');
     if (rawReadings) {
       const allReadings = JSON.parse(rawReadings);
-      // Filter out incomplete readings
-      const completeReadings = allReadings.filter((r: Reading) => r.timestamp && r.reading);
+      const completeReadings = allReadings.filter((r: Reading) => r.timestamp && r.reading && r.audioIpfsHash);
       setPastReadings(completeReadings);
     }
   }, []);
@@ -25,6 +29,23 @@ const PastReadingsGallery: React.FC = () => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString();
+  };
+
+  const toggleAudio = (audioIpfsHash: string) => {
+    const audioUrl = `https://gateway.pinata.cloud/ipfs/${audioIpfsHash}`;
+    if (currentlyPlaying === audioIpfsHash) {
+      audioRef.current?.pause();
+      setCurrentlyPlaying(null);
+    } else {
+      if (audioRef.current) {
+        audioRef.current.src = audioUrl;
+        audioRef.current.play();
+      } else {
+        audioRef.current = new Audio(audioUrl);
+        audioRef.current.play();
+      }
+      setCurrentlyPlaying(audioIpfsHash);
+    }
   };
 
   return (
@@ -45,6 +66,16 @@ const PastReadingsGallery: React.FC = () => {
                       <div className="p-4">
                         <p className="text-sm text-gray-500 mb-2">{formatDate(reading.timestamp)}</p>
                         <p className="text-sm line-clamp-3">{reading.reading}</p>
+                        <Button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleAudio(reading.audioIpfsHash);
+                          }} 
+                          className="mt-2"
+                        >
+                          {currentlyPlaying === reading.audioIpfsHash ? <Pause className="mr-2" /> : <Play className="mr-2" />}
+                          {currentlyPlaying === reading.audioIpfsHash ? 'Pause' : 'Play'} Reading
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -63,6 +94,13 @@ const PastReadingsGallery: React.FC = () => {
                       <h3 className="text-lg font-semibold mb-2">Your Reading</h3>
                       <p className="text-sm mb-2">{reading.reading}</p>
                       <p className="text-xs text-gray-500">Date: {formatDate(reading.timestamp)}</p>
+                      <Button 
+                        onClick={() => toggleAudio(reading.audioIpfsHash)} 
+                        className="mt-4"
+                      >
+                        {currentlyPlaying === reading.audioIpfsHash ? <Pause className="mr-2" /> : <Play className="mr-2" />}
+                        {currentlyPlaying === reading.audioIpfsHash ? 'Pause' : 'Play'} Reading
+                      </Button>
                     </div>
                   </div>
                 </DialogContent>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import FileUpload from '../components/FileUpload';
@@ -9,6 +9,7 @@ import PalmReading from '../components/PalmReading';
 import PastReadingsGallery from '../components/PastReadingsGallery';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Play, Pause } from 'lucide-react';
 
 export default function Home() {
   const [reading, setReading] = useState<string | null>(null);
@@ -16,12 +17,16 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ipfsHash, setIpfsHash] = useState<string | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handleUploadComplete = (hash: string) => {
     setIpfsHash(hash);
     setImageUrl(`https://gateway.pinata.cloud/ipfs/${hash}`);
     setError(null);
     setReading(null);
+    setAudioUrl(null);
   };
 
   const handleAnalyze = async () => {
@@ -29,14 +34,10 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axios.post<{ reading: string }>('/api/analyze', { ipfsHash });
-      if (response.data.reading.startsWith('Error:')) {
-        setError(response.data.reading);
-        setReading(null);
-      } else {
-        setReading(response.data.reading);
-        saveReading(ipfsHash, response.data.reading);
-      }
+      const response = await axios.post<{ reading: string, audioIpfsHash: string }>('/api/analyze', { ipfsHash });
+      setReading(response.data.reading);
+      setAudioUrl(`https://gateway.pinata.cloud/ipfs/${response.data.audioIpfsHash}`);
+      saveReading(ipfsHash, response.data.reading, response.data.audioIpfsHash);
     } catch (error) {
       console.error('Error analyzing palm:', error);
       setError('An unexpected error occurred while analyzing the image.');
@@ -45,15 +46,27 @@ export default function Home() {
     }
   };
 
-  const saveReading = (ipfsHash: string, reading: string) => {
+  const saveReading = (ipfsHash: string, reading: string, audioIpfsHash: string) => {
     const newReading = {
       ipfsHash,
       timestamp: new Date().toISOString(),
-      reading
+      reading,
+      audioIpfsHash
     };
     const pastReadings = JSON.parse(localStorage.getItem('pastReadings') || '[]');
     pastReadings.push(newReading);
     localStorage.setItem('pastReadings', JSON.stringify(pastReadings));
+  };
+
+  const toggleAudio = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
   };
 
   return (
@@ -92,6 +105,15 @@ export default function Home() {
             {error && (
               <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
                 {error}
+              </div>
+            )}
+            {audioUrl && (
+              <div className="mt-4 flex justify-center">
+                <Button onClick={toggleAudio}>
+                  {isPlaying ? <Pause className="mr-2" /> : <Play className="mr-2" />}
+                  {isPlaying ? 'Pause Reading' : 'Play Reading'}
+                </Button>
+                <audio ref={audioRef} src={audioUrl} onEnded={() => setIsPlaying(false)} />
               </div>
             )}
             {reading && <PalmReading reading={reading} />}

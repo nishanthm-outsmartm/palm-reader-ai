@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzePalm } from '../../../lib/aiModels';
+import { HfInference } from '@huggingface/inference';
+import { uploadToPinata } from '@/lib/pinata';
+
+const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +16,23 @@ export async function POST(request: NextRequest) {
     const reading = await analyzePalm(imageUrl);
     console.log('Generated reading:', reading);
 
-    return NextResponse.json({ reading });
+    // Generate audio from the reading
+    const audioResponse = await hf.textToSpeech({
+      model: "espnet/kan-bayashi_ljspeech_vits",
+      inputs: reading,
+    });
+
+    // Convert AudioBuffer to Blob
+    const audioBlob = new Blob([audioResponse], { type: 'audio/wav' });
+
+    // Upload audio to Pinata
+    const audioFile = new File([audioBlob], 'reading.wav', { type: 'audio/wav' });
+    const audioUploadResult = await uploadToPinata(audioFile);
+
+    return NextResponse.json({ 
+      reading,
+      audioIpfsHash: audioUploadResult.ipfsHash
+    });
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error('Error in analyze API:', error);

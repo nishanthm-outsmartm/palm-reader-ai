@@ -55,7 +55,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
       {!isWebcamOpen ? (
         <motion.div
           className="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-md"
-          whileHover={{ scale: 1.02 }}
+          // whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
           <input

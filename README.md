@@ -38,7 +38,7 @@ Palm Reader AI is an innovative (but mostly fun) web application that uses artif
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/palm-reader-ai.git
+   git clone https://github.com/ehernandezvilla/palm-reader-ai
    ```
 
 2. Install dependencies:

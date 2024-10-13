@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Facebook, Twitter, Instagram, Mail } from 'lucide-react';
+import { Twitter, Mail } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -43,9 +43,7 @@ const Footer: React.FC = () => {
           >
             <h3 className="text-xl font-serif mb-4">Connect With Us</h3>
             <div className="flex space-x-4 mb-4">
-              {/* <a href="#" className="hover:text-yellow-300 transition-colors"><Facebook size={24} /></a>
-              <a href="#" className="hover:text-yellow-300 transition-colors"><Twitter size={24} /></a>
-              <a href="#" className="hover:text-yellow-300 transition-colors"><Instagram size={24} /></a> */}
+              <a href="https://x.com/ehernandezvilla" className="hover:text-yellow-300 transition-colors"><Twitter size={24} /></a>
                 <a href="mailto:eduardo.hernandez@bakslash.com" className="hover:text-yellow-300 transition-colors">
                 <Mail size={24} />
                 eduardo.hernandez@bakslash.com

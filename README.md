@@ -1,7 +1,7 @@
 # Palm Reader AI 🔮🖐️
 
 ![Tarot img](https://images.unsplash.com/photo-1600430073932-e915854d9d4d?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D "Palm Reader AI")
-Image: Unsplash - Viva Luna Studios
+[Image: Unsplash - Viva Luna Studios](https://unsplash.com/@vivalunastudios)
 
 Palm Reader AI is an innovative (but mostly fun) web application that uses artificial intelligence to analyze palm images and provide mystical readings. This project was developed as part of the Dev Pinata challenge, showcasing the integration of AI technologies with decentralized storage solutions.
 
@@ -70,7 +70,7 @@ This project was created as part of the Dev Pinata challenge, which focuses on i
 
 ## 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/yourusername/palm-reader-ai/issues).
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/ehernandezvilla/palm-reader-ai/issues).
 
 ## 📜 License
 

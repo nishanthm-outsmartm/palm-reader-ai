@@ -16,40 +16,17 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
     setIsUploading(true);
     const formData = new FormData();
     formData.append('file', file);
-  
+
     try {
       const response = await axios.post('/api/upload', formData);
-      const { ipfsHash, pinSize, timestamp } = response.data;
-      
-      // Guardar los metadatos en localStorage o en una base de datos
-      const metadata = {
-        ipfsHash,
-        pinSize,
-        timestamp,
-        reading: null // Se actualizará después del análisis
-      };
-      saveMetadata(metadata);
-      
-      onUploadComplete(ipfsHash);
+      onUploadComplete(response.data.ipfsHash);
     } catch (error) {
       console.error('Error uploading file:', error);
     } finally {
       setIsUploading(false);
     }
   };
-  
-  interface Metadata {
-    ipfsHash: string;
-    pinSize: number;
-    timestamp: string;
-    reading: string | null;
-  }
 
-  const saveMetadata = (metadata: Metadata) => {
-    const pastReadings = JSON.parse(localStorage.getItem('pastReadings') || '[]');
-    pastReadings.push(metadata);
-    localStorage.setItem('pastReadings', JSON.stringify(pastReadings));
-  };
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {

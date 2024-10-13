@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import FileUpload from '../components/FileUpload';
@@ -10,13 +10,6 @@ import PastReadingsGallery from '../components/PastReadingsGallery';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-interface ReadingMetadata {
-  ipfsHash: string;
-  pinSize?: number;
-  timestamp: string;
-  reading: string | null;
-}
-
 export default function Home() {
   const [reading, setReading] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -24,19 +17,11 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [ipfsHash, setIpfsHash] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Clear state when component mounts
-    setReading(null);
-    setImageUrl(null);
-    setError(null);
-    setIpfsHash(null);
-  }, []);
-
   const handleUploadComplete = (hash: string) => {
     setIpfsHash(hash);
     setImageUrl(`https://gateway.pinata.cloud/ipfs/${hash}`);
-    setError(null); // Clear any previous errors
-    setReading(null); // Clear any previous reading
+    setError(null);
+    setReading(null);
   };
 
   const handleAnalyze = async () => {
@@ -50,8 +35,7 @@ export default function Home() {
         setReading(null);
       } else {
         setReading(response.data.reading);
-        // Update the metadata with the new reading
-        updateMetadataWithReading(ipfsHash, response.data.reading);
+        saveReading(ipfsHash, response.data.reading);
       }
     } catch (error) {
       console.error('Error analyzing palm:', error);
@@ -61,12 +45,15 @@ export default function Home() {
     }
   };
 
-  const updateMetadataWithReading = (ipfsHash: string, newReading: string) => {
-    const pastReadings = JSON.parse(localStorage.getItem('pastReadings') || '[]') as ReadingMetadata[];
-    const updatedReadings = pastReadings.map((r: ReadingMetadata) => 
-      r.ipfsHash === ipfsHash ? {...r, reading: newReading} : r
-    );
-    localStorage.setItem('pastReadings', JSON.stringify(updatedReadings));
+  const saveReading = (ipfsHash: string, reading: string) => {
+    const newReading = {
+      ipfsHash,
+      timestamp: new Date().toISOString(),
+      reading
+    };
+    const pastReadings = JSON.parse(localStorage.getItem('pastReadings') || '[]');
+    pastReadings.push(newReading);
+    localStorage.setItem('pastReadings', JSON.stringify(pastReadings));
   };
 
   return (
@@ -84,31 +71,33 @@ export default function Home() {
       >
         Palm Reader AI
       </motion.h1>
-      <Tabs defaultValue="current" className="max-w-2xl mx-auto">
+      <Tabs defaultValue="current" className="w-full max-w-4xl mx-auto">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="current">Current Reading</TabsTrigger>
           <TabsTrigger value="past">Past Readings</TabsTrigger>
         </TabsList>
         <TabsContent value="current">
-          <ImagePreview imageUrl={imageUrl} />
-          <FileUpload onUploadComplete={handleUploadComplete} />
-          {imageUrl && (
-            <Button
-              className="mt-4 w-full"
-              onClick={handleAnalyze}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Analyzing...' : 'Analyze Palm'}
-            </Button>
-          )}
-          {error && (
-            <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-              {error}
-            </div>
-          )}
-          {reading && <PalmReading reading={reading} />}
+          <div className="max-w-2xl mx-auto">
+            <ImagePreview imageUrl={imageUrl} />
+            <FileUpload onUploadComplete={handleUploadComplete} />
+            {imageUrl && (
+              <Button
+                className="mt-4 w-full"
+                onClick={handleAnalyze}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Analyzing...' : 'Analyze Palm'}
+              </Button>
+            )}
+            {error && (
+              <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                {error}
+              </div>
+            )}
+            {reading && <PalmReading reading={reading} />}
+          </div>
         </TabsContent>
-        <TabsContent value="past">
+        <TabsContent value="past" className="w-full">
           <PastReadingsGallery />
         </TabsContent>
       </Tabs>

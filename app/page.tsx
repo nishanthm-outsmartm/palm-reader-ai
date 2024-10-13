@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import FileUpload from '../components/FileUpload';
@@ -9,9 +9,22 @@ import PalmReading from '../components/PalmReading';
 import PastReadingsGallery from '../components/PastReadingsGallery';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Play, Pause } from 'lucide-react';
+import { Play, Pause, Loader } from 'lucide-react';
 import Hero from '@/components/HeroComponent';
 import Footer from '@/components/Footer';
+
+const loadingMessages = [
+  "Analyzing the lines of destiny...",
+  "Decoding the secrets of your palm...",
+  "Consulting with the digital oracle...",
+  "Unraveling the mysteries of your future...",
+  "Channeling the wisdom of ancient palmists...",
+  "Translating hand-written fate into binary...",
+  "Scanning for signs of upcoming adventures...",
+  "Detecting traces of good fortune...",
+  "Measuring the length of your life line...",
+  "Calculating your luckiness quotient..."
+];
 
 export default function Home() {
   const [reading, setReading] = useState<string | null>(null);
@@ -21,7 +34,20 @@ export default function Home() {
   const [ipfsHash, setIpfsHash] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState(loadingMessages[0]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isLoading) {
+      let index = 0;
+      interval = setInterval(() => {
+        index = (index + 1) % loadingMessages.length;
+        setLoadingMessage(loadingMessages[index]);
+      }, 3000); // Change message every 3 seconds
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const handleUploadComplete = (hash: string) => {
     setIpfsHash(hash);
@@ -93,14 +119,29 @@ export default function Home() {
             <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6 mt-6">
               <ImagePreview imageUrl={imageUrl} />
               <FileUpload onUploadComplete={handleUploadComplete} />
-              {imageUrl && (
+              {imageUrl && !isLoading && (
                 <Button
                   className="mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white"
                   onClick={handleAnalyze}
-                  disabled={isLoading}
                 >
-                  {isLoading ? 'Analyzing...' : 'Analyze Palm'}
+                  Analyze Palm
                 </Button>
+              )}
+              {isLoading && (
+                <div className="mt-4 p-6 bg-orange-100 border border-orange-300 rounded-lg text-center">
+                  <Loader className="animate-spin mx-auto mb-4 text-orange-500" size={40} />
+                  <motion.p 
+                    key={loadingMessage}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-orange-800 font-semibold text-lg mb-2"
+                  >
+                    {loadingMessage}
+                  </motion.p>
+                  <p className="text-orange-600">Please wait while our AI works its magic...</p>
+                </div>
               )}
               {error && (
                 <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">

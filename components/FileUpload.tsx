@@ -5,6 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Upload, Camera } from 'lucide-react';
 import Webcam from 'react-webcam';
 
+declare global {
+  interface Window {
+    sa_event?: (eventName: string, eventData?: Record<string, unknown>) => void;
+  }
+}
 interface FileUploadProps {
   onUploadComplete: (ipfsHash: string) => void;
 }
@@ -34,6 +39,10 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
     const file = e.target.files?.[0];
     if (file) {
       await uploadFile(file);
+      // Track file upload event with Simple Analytics
+      if (window.sa_event) {
+        window.sa_event("image_upload", { fileName: file.name });
+      }
     }
   };
 
@@ -46,6 +55,12 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
     if (imageSrc) {
       const blob = await fetch(imageSrc).then(res => res.blob());
       await uploadFile(blob);
+  
+      // Track webcam capture event with Simple Analytics
+      if (window.sa_event) {
+        window.sa_event("webcam_capture");
+      }
+  
       setIsWebcamOpen(false);
     }
   }, [webcamRef]);

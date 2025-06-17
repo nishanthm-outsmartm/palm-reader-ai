@@ -4,30 +4,65 @@ const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
 
 export async function analyzePalm(imageUrl: string): Promise<string> {
   try {
-    console.log('Analyzing image:', imageUrl);
+    console.log('🔍 Starting palm analysis for:', imageUrl);
 
-    // Paso 1: Analizar la imagen con un modelo de detección de objetos
-    const objectDetectionResponse = await hf.objectDetection({
-      model: "facebook/detr-resnet-50",
-      data: await fetch(imageUrl).then(res => res.arrayBuffer()),
-    });
+    // Verificar que la imagen sea accesible primero
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+      throw new Error(`Failed to fetch image: ${imageResponse.status} ${imageResponse.statusText}`);
+    }
 
-    console.log('Object detection response:', JSON.stringify(objectDetectionResponse, null, 2));
+    const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
+    console.log('✅ Image accessible, type:', contentType, 'size:', imageResponse.headers.get('content-length'));
 
-    // Paso 2: Generar una descripción de la imagen
+    // Convertir a Blob
+    const arrayBuffer = await imageResponse.arrayBuffer();
+    const imageBlob = new Blob([arrayBuffer], { type: contentType });
+    console.log('📦 Blob created, size:', imageBlob.size);
+
+    // Verificar que tenemos API key
+    if (!process.env.HUGGINGFACE_API_KEY) {
+      throw new Error('Hugging Face API key not found');
+    }
+
+    console.log('🤖 Attempting object detection...');
+
+    let objectDetectionResponse;
+    try {
+      objectDetectionResponse = await hf.objectDetection({
+        model: "facebook/detr-resnet-50",
+        data: imageBlob,
+      });
+      console.log('✅ Object detection successful:', JSON.stringify(objectDetectionResponse, null, 2));
+    } catch (fbError) {
+      console.error('❌ Facebook model failed:', fbError);
+
+      // Fallback a un modelo más simple
+      console.log('🔄 Trying fallback model...');
+      try {
+        objectDetectionResponse = await hf.objectDetection({
+          model: "hustvl/yolos-tiny",
+          data: imageBlob,
+        });
+        console.log('✅ Fallback model successful:', JSON.stringify(objectDetectionResponse, null, 2));
+      } catch (fallbackError) {
+        console.error('❌ Fallback model also failed:', fallbackError);
+        console.log('🎲 Using generic description due to model failures');
+        return generateGenericPalmReading();
+      }
+    }
+
     const imageDescription = generateImageDescription(objectDetectionResponse);
+    console.log('📝 Generated description:', imageDescription);
 
-    // Paso 3: Usar un modelo de generación de texto para crear la "lectura" de la palma
     const palmReading = await generatePalmReading(imageDescription);
+    console.log('🔮 Generated palm reading:', palmReading);
 
     return palmReading;
+
   } catch (error) {
-    console.error('Error analyzing palm:', error);
-    if (error instanceof Error) {
-      return `Error: ${error.message}`;
-    } else {
-      return "An unexpected error occurred while analyzing the image.";
-    }
+    console.error('💥 Error in analyzePalm:', error);
+    return generateGenericPalmReading();
   }
 }
 
@@ -43,75 +78,82 @@ interface DetectionObject {
 }
 
 function generateImageDescription(detectionResult: DetectionObject[]): string {
-  const hasHand = detectionResult.some((obj: DetectionObject) => 
-    obj.label === "person" || obj.label === "hand"
+  if (!Array.isArray(detectionResult)) {
+    console.warn('❗ Invalid detection result:', detectionResult);
+    return "No se pudo analizar correctamente la imagen, pero haré una lectura basada en la energía que transmite.";
+  }
+
+  console.log('🏷️ Processing detection results:', detectionResult.length, 'objects found');
+
+  const relevantObjects = detectionResult.filter(obj =>
+    obj.label?.toLowerCase().includes('person') ||
+    obj.label?.toLowerCase().includes('hand') ||
+    obj.score > 0.5
   );
 
-  if (!hasHand) {
-    throw new Error("No hand detected in the image. Please upload an image of a palm.");
-  }
+  console.log('🎯 Relevant objects:', relevantObjects.map(obj => `${obj.label} (${obj.score.toFixed(2)})`));
 
-  let description = "En esta imagen de una palma, puedo ver: una mano humana con su palma visible.";
-  description += " Las líneas de la palma son claramente visibles.";
-  description += " Puedo distinguir la línea de la vida, la línea del corazón y la línea de la cabeza.";
-  
-  // Agregar detalles aleatorios para hacer la descripción más interesante
-  const details = [
-    "The life line appears deep and curved.",
-    "The heart line is long and well-defined.",
-    "The head line is straight and clear.",
-    "There are several minor lines intersecting the main lines.",
-    "The Mount of Venus (the base of the thumb) is prominent.",
-    "The fingers are long and thin.",
-    "The overall shape of the hand is rectangular.",
-  ];
-  
-  for (let i = 0; i < 3; i++) {
-    description += " " + details[Math.floor(Math.random() * details.length)];
+  if (relevantObjects.length > 0) {
+    return "En esta imagen puedo detectar elementos que sugieren la presencia de una mano humana. Las líneas de la palma están presentes y visibles. Puedo distinguir las características principales necesarias para una lectura de palma.";
+  } else {
+    return "En esta imagen, aunque no puedo detectar específicamente una mano, procederé con una lectura basada en la energía que transmite la imagen.";
   }
-
-  return description;
 }
 
 async function generatePalmReading(imageDescription: string): Promise<string> {
-  const prompt = `
-You are an expert palm reader with years of experience. Based on the following description of a palm image, provide a detailed and mystical reading of the person's fortune and destiny. Be creative, use poetic and mystical language. The reading should be positive and hopeful, but also include some challenges or warnings. Speak as if you're really seeing and reading the palm directly.
+  const prompt = `Como experto lector de palmas, basándome en: "${imageDescription}", 
+  proporciona una lectura mística que incluya:
+  - Líneas principales (vida, corazón, cabeza)
+  - Personalidad y rasgos
+  - Predicciones positivas
+  - Un mensaje inspirador
 
-Image description: ${imageDescription}
-
-Your palm reading:`;
+  Lectura:`;
 
   try {
+    console.log('📝 Generating text with Llama model...');
+
     const response = await hf.textGeneration({
-      model: "meta-llama/Llama-2-7b-chat-hf",
+      model: "tiiuae/falcon-7b-instruct",
       inputs: prompt,
       parameters: {
-        max_new_tokens: 250,
-        temperature: 0.7,
-        top_p: 0.95,
-        repetition_penalty: 1.15,
+        max_new_tokens: 200,
+        temperature: 0.8,
+        top_p: 0.9,
+        repetition_penalty: 1.1,
       }
     });
 
-    // Limpiar y formatear la respuesta
     let cleanedReading = response.generated_text.trim();
-    
-    // Eliminar el prompt si está incluido en la respuesta
-    const readingStart = cleanedReading.lastIndexOf("Your palm reading:");
+
+    const readingStart = cleanedReading.lastIndexOf("Lectura:");
     if (readingStart !== -1) {
-      cleanedReading = cleanedReading.slice(readingStart + "Your palm reading:".length).trim();
+      cleanedReading = cleanedReading.slice(readingStart + "Lectura:".length).trim();
     }
 
-    // Limpiar cualquier texto incompleto al final
-    const lastPeriodIndex = cleanedReading.lastIndexOf('.');
-    if (lastPeriodIndex !== -1) {
-      cleanedReading = cleanedReading.slice(0, lastPeriodIndex + 1);
+    if (cleanedReading.length < 50) {
+      console.log('⚠️ Generated reading too short, using generic');
+      return generateGenericPalmReading();
     }
 
+    console.log('✅ Text generation successful');
     return cleanedReading;
 
   } catch (error) {
-    console.error("Error generating palm reading with Llama model:", error);
-    return "I apologize, but I am unable to provide a palm reading at this time. Please try again later.";
+    console.error('❌ Text generation failed:', error);
+    return generateGenericPalmReading();
   }
+}
+
+function generateGenericPalmReading(): string {
+  const readings = [
+    "Tu palma revela una personalidad fuerte y determinada. La línea de la vida muestra vitalidad y energía que te acompañará en todos tus proyectos...",
+    "En tu mano veo el signo de una persona creativa y apasionada. Tu línea del destino es clara y profunda...",
+    "Las líneas de tu palma hablan de sabiduría interior y gran potencial. Tu futuro está lleno de posibilidades brillantes...",
+    "Tu palma irradia energía positiva y determinación. La línea de la vida es larga y estable, prometiendo longevidad y felicidad...",
+  ];
+
+  const selectedReading = readings[Math.floor(Math.random() * readings.length)];
+  console.log('🎲 Using generic reading');
+  return selectedReading;
 }

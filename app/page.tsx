@@ -13,6 +13,10 @@ import { Loader } from 'lucide-react';
 import Hero from '@/components/HeroComponent';
 import HowToUse from '@/components/HowToUse';
 import Footer from '@/components/Footer';
+import type {
+  HandLandmarker as HandLandmarkerType,
+  FilesetResolver as FilesetResolverType,
+} from '@mediapipe/tasks-vision';
 
 const loadingMessages = [
   "Analyzing the lines of destiny...",
@@ -29,8 +33,8 @@ const loadingMessages = [
 
 declare global {
   interface Window {
-    HandLandmarker: any;
-    FilesetResolver: any;
+    HandLandmarker: typeof HandLandmarkerType;
+    FilesetResolver: typeof FilesetResolverType;
   }
 }
 

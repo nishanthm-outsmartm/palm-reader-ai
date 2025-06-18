@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Upload, Search, Clock, Volume2 } from 'lucide-react';
+import { Upload, Search, Clock } from 'lucide-react';
 
 const steps = [
   {
@@ -17,11 +17,6 @@ const steps = [
     title: "Wait",
     description: "Our mystical AI will decode the secrets hidden in your palm lines."
   },
-  {
-    icon: <Volume2 className="w-8 h-8 text-orange-500" />,
-    title: "Listen or Read",
-    description: "Receive your palm reading as text or listen to the audio version."
-  }
 ];
 
 const HowToUse: React.FC = () => {

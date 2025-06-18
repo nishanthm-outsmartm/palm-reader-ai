@@ -10,7 +10,6 @@ import PastReadingsGallery from '../components/PastReadingsGallery';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader } from 'lucide-react';
-import Hero from '@/components/HeroComponent';
 import HowToUse from '@/components/HowToUse';
 import Footer from '@/components/Footer';
 import type {
@@ -159,7 +158,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-yellow-50 to-orange-100">
-      <Hero />
       <a href="#how-to-use" className="text-orange-600 hover:text-orange-800">
         <HowToUse />
       </a>

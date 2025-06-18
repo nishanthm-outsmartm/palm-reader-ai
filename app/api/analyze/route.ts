@@ -1,45 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { analyzePalm } from '../../../lib/aiModels';
-import { HfInference } from '@huggingface/inference';
-import { uploadToPinata } from '@/lib/pinata';
+import { InferenceClient } from '@huggingface/inference';
 
-const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+const hf = new InferenceClient(process.env.HUGGINGFACE_API_KEY!);
 
 export async function POST(request: NextRequest) {
   try {
     const { ipfsHash } = await request.json();
-    console.log('Received IPFS hash:', ipfsHash);
 
-    const imageUrl = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
-    console.log('Image URL:', imageUrl);
-
-    const reading = await analyzePalm(imageUrl);
-    console.log('Generated reading:', reading);
-
-    // Generate audio from the reading
-    const audioResponse = await hf.textToSpeech({
-      model: "espnet/kan-bayashi_ljspeech_vits",
-      inputs: reading,
-    });
-
-    // Convert AudioBuffer to Blob
-    const audioBlob = new Blob([audioResponse], { type: 'audio/wav' });
-
-    // Upload audio to Pinata
-    const audioFile = new File([audioBlob], 'reading.wav', { type: 'audio/wav' });
-    const audioUploadResult = await uploadToPinata(audioFile);
-
-    return NextResponse.json({ 
-      reading,
-      audioIpfsHash: audioUploadResult.ipfsHash
-    });
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error('Error in analyze API:', error);
-      return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
-    } else {
-      console.error('Unknown error in analyze API:', error);
-      return NextResponse.json({ error: 'Internal Server Error', details: 'Unknown error' }, { status: 500 });
+    if (!ipfsHash || typeof ipfsHash !== 'string') {
+      return NextResponse.json({ error: 'IPFS hash inválido.' }, { status: 400 });
     }
+
+    const prompt = buildPrompt();
+
+    const result = await hf.chatCompletion({
+      provider: 'hf-inference',
+      model: 'meta-llama/Llama-3.1-8B-Instruct',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.5,
+      top_p: 0.7,
+      max_tokens: 200,
+    });
+
+    const message = result.choices?.[0]?.message?.content?.trim() || 'No se pudo generar una respuesta válida.';
+    console.log('📜 Lectura generada:', message);
+    return NextResponse.json({ reading: message });
+  } catch (error) {
+    console.error('❌ Error en chatCompletion:', error);
+    return NextResponse.json({ error: 'Error interno generando lectura.' }, { status: 500 });
   }
+}
+
+function buildPrompt(): string {
+  return `Eres un lector de palmas místico. Alguien subió la imagen de su palma y quiere conocer su destino.
+
+Haz una lectura que incluya lo común asociado a lectura de palmas, como el amor, la carrera, la salud y el futuro. No te limites a lo obvio, sé creativo y ofrece una visión única.
+No uses frases genéricas como "todo estará bien" o "tendrás éxito". Además manten en un máximo de 200 palabras sin dejar frases incompletas.
+
+Usa un tono cálido y empático. Puedes usar emojis si lo deseas.`;
 }

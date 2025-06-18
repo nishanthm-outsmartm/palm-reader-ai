@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import FileUpload from '../components/FileUpload';
@@ -9,11 +9,10 @@ import PalmReading from '../components/PalmReading';
 import PastReadingsGallery from '../components/PastReadingsGallery';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Play, Pause, Loader } from 'lucide-react';
+import { Loader } from 'lucide-react';
 import Hero from '@/components/HeroComponent';
 import HowToUse from '@/components/HowToUse';
 import Footer from '@/components/Footer';
-
 
 const loadingMessages = [
   "Analyzing the lines of destiny...",
@@ -28,16 +27,32 @@ const loadingMessages = [
   "Calculating your luckiness quotient..."
 ];
 
+declare global {
+  interface Window {
+    HandLandmarker: any;
+    FilesetResolver: any;
+  }
+}
+
 export default function Home() {
   const [reading, setReading] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ipfsHash, setIpfsHash] = useState<string | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState(loadingMessages[0]);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('@mediapipe/tasks-vision').then(mod => {
+        console.log("✅ MediaPipe modules loaded");
+        window.HandLandmarker = mod.HandLandmarker;
+        window.FilesetResolver = mod.FilesetResolver;
+      }).catch(err => {
+        console.error("❌ Error loading MediaPipe modules:", err);
+      });
+    }
+  }, []);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -46,7 +61,7 @@ export default function Home() {
       interval = setInterval(() => {
         index = (index + 1) % loadingMessages.length;
         setLoadingMessage(loadingMessages[index]);
-      }, 3000); // Change message every 3 seconds
+      }, 3000);
     }
     return () => clearInterval(interval);
   }, [isLoading]);
@@ -56,46 +71,85 @@ export default function Home() {
     setImageUrl(`https://gateway.pinata.cloud/ipfs/${hash}`);
     setError(null);
     setReading(null);
-    setAudioUrl(null);
   };
 
   const handleAnalyze = async () => {
-    if (!ipfsHash) return;
+    if (!ipfsHash || !imageUrl) return;
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axios.post<{ reading: string, audioIpfsHash: string }>('/api/analyze', { ipfsHash });
+      console.log("🔍 Validating hand in image:", imageUrl);
+      const isValid = await validateHand(imageUrl);
+      console.log("🧠 Hand validation result:", isValid);
+      if (!isValid) {
+        setError("No se detectó una mano clara en la imagen.");
+        return;
+      }
+
+      console.log("🚀 Sending to /api/analyze:", ipfsHash);
+      const response = await axios.post<{ reading: string }>('/api/analyze', { ipfsHash });
+      console.log("✅ Received reading:", response.data.reading);
+
       setReading(response.data.reading);
-      setAudioUrl(`https://gateway.pinata.cloud/ipfs/${response.data.audioIpfsHash}`);
-      saveReading(ipfsHash, response.data.reading, response.data.audioIpfsHash);
+      saveReading(ipfsHash, response.data.reading);
     } catch (error) {
-      console.error('Error analyzing palm:', error);
+      console.error('❌ Error analyzing palm:', error);
       setError('An unexpected error occurred while analyzing the image.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const saveReading = (ipfsHash: string, reading: string, audioIpfsHash: string) => {
+  const saveReading = (ipfsHash: string, reading: string) => {
     const newReading = {
       ipfsHash,
       timestamp: new Date().toISOString(),
-      reading,
-      audioIpfsHash
+      reading
     };
     const pastReadings = JSON.parse(localStorage.getItem('pastReadings') || '[]');
     pastReadings.push(newReading);
     localStorage.setItem('pastReadings', JSON.stringify(pastReadings));
   };
 
-  const toggleAudio = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
+  const validateHand = async (imageUrl: string): Promise<boolean> => {
+    try {
+      console.log("🧬 Initializing FilesetResolver...");
+      const vision = await window.FilesetResolver.forVisionTasks('/models');
+
+      console.log("🖐️ Creating HandLandmarker...");
+      const detector = await window.HandLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: '/models/hand_landmarker.task',
+        },
+        runningMode: 'IMAGE',
+        numHands: 2,
+      });
+
+      console.log("📷 Fetching image...");
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const bitmap = await createImageBitmap(blob);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        console.error("❌ Canvas context is null");
+        return false;
       }
-      setIsPlaying(!isPlaying);
+
+      ctx.drawImage(bitmap, 0, 0);
+      const imageData = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+
+      console.log("🔍 Detecting hand...");
+      const result = detector.detect(imageData);
+
+      console.log("🧾 Detection result:", result);
+      return result.handedness.length > 0;
+    } catch (err) {
+      console.error("❌ Error in validateHand:", err);
+      return false;
     }
   };
 
@@ -103,7 +157,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-yellow-50 to-orange-100">
       <Hero />
       <a href="#how-to-use" className="text-orange-600 hover:text-orange-800">
-      <HowToUse />
+        <HowToUse />
       </a>
       <motion.main 
         className="container mx-auto px-4 py-12"
@@ -153,16 +207,7 @@ export default function Home() {
                   {error}
                 </div>
               )}
-              {audioUrl && (
-                <div className="mt-4 flex justify-center">
-                  <Button onClick={toggleAudio} className="bg-yellow-500 hover:bg-yellow-600 text-white">
-                    {isPlaying ? <Pause className="mr-2" /> : <Play className="mr-2" />}
-                    {isPlaying ? 'Pause Reading' : 'Play Reading'}
-                  </Button>
-                  <audio ref={audioRef} src={audioUrl} onEnded={() => setIsPlaying(false)} />
-                </div>
-              )}
-              {reading && <PalmReading reading={reading} />}
+              {!error && reading && <PalmReading reading={reading} />}
             </div>
           </TabsContent>
           <TabsContent value="past" className="w-full">
@@ -170,7 +215,7 @@ export default function Home() {
           </TabsContent>
         </Tabs>
       </motion.main>
-      <Footer/>
+      <Footer />
     </div>
   );
 }

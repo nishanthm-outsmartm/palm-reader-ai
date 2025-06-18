@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import Script from 'next/script'
 import "./globals.css";
+import Navbar from "@/components/NavBarComponent";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -29,17 +29,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <Navbar />
         {children}
       </body>
-      <Script src="https://scripts.simpleanalyticscdn.com/latest.js"  />
-      <Script
-        async
-        data-collect="outbound,emails,downloads"
-        data-extensions="pdf,csv,docx,xlsx,zip"
-        data-use-title="true"
-        data-full-urls="false"
-        src="https://scripts.simpleanalyticscdn.com/auto-events.js"
-      />
     </html>
   );
 }

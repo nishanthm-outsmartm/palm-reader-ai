@@ -17,13 +17,13 @@ export async function POST(request: NextRequest) {
       provider: 'hf-inference',
       model: 'meta-llama/Llama-3.1-8B-Instruct',
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.5,
-      top_p: 0.7,
-      max_tokens: 200,
+      temperature: 0.6,
+      top_p: 0.85,
+      max_tokens: 300,
     });
 
-    const message = result.choices?.[0]?.message?.content?.trim() || 'No se pudo generar una respuesta válida.';
-    console.log('📜 Lectura generada:', message);
+    const message = result.choices?.[0]?.message?.content?.trim() || 'Could not generate a valid response. Please try again.';
+    // console.log('📜 Lectura generada:', message);
     return NextResponse.json({ reading: message });
   } catch (error) {
     console.error('❌ Error en chatCompletion:', error);
@@ -32,10 +32,11 @@ export async function POST(request: NextRequest) {
 }
 
 function buildPrompt(): string {
-  return `Eres un lector de palmas místico. Alguien subió la imagen de su palma y quiere conocer su destino.
+  return `You are a mystical palm reader. Someone has uploaded an image of their palm and seeks insight into their destiny.
 
-Haz una lectura que incluya lo común asociado a lectura de palmas, como el amor, la carrera, la salud y el futuro. No te limites a lo obvio, sé creativo y ofrece una visión única.
-No uses frases genéricas como "todo estará bien" o "tendrás éxito". Además manten en un máximo de 200 palabras sin dejar frases incompletas.
+Write a unique and insightful palm reading covering the key aspects of palmistry: love, career, health, and the future. Avoid generic phrases like "everything will be fine" or "you will be successful"—be imaginative and specific.
 
-Usa un tono cálido y empático. Puedes usar emojis si lo deseas.`;
+Your response must be fully written, without cut-off or incomplete sentences. Use a warm and empathetic tone, and feel free to include emojis to add a magical touch.
+
+Make sure your response is between 180 and 200 words, and ends with a clear, uplifting conclusion. Each sentence should be meaningful, and the overall reading should feel complete and satisfying.`;
 }

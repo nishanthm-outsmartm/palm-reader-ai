@@ -82,7 +82,7 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
     try {
-      console.log("🔍 Validating hand in image:", imageUrl);
+      // console.log("🔍 Validating hand in image:", imageUrl);
       const isValid = await validateHand(imageUrl);
       console.log("🧠 Hand validation result:", isValid);
       if (!isValid) {
@@ -90,9 +90,9 @@ export default function Home() {
         return;
       }
 
-      console.log("🚀 Sending to /api/analyze:", ipfsHash);
+      // console.log("🚀 Sending to /api/analyze:", ipfsHash);
       const response = await axios.post<{ reading: string }>('/api/analyze', { ipfsHash });
-      console.log("✅ Received reading:", response.data.reading);
+      // console.log("✅ Received reading:", response.data.reading);
 
       setReading(response.data.reading);
       saveReading(ipfsHash, response.data.reading);
